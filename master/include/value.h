@@ -57,15 +57,15 @@ namespace kaco {
 		static_assert(sizeof(float)==4, "sizeof(float)!=4 on your machine.");
 		static_assert(sizeof(double)==8, "sizeof(double)!=8 on your machine.");
 
-		/// Tyoe of the value
+		/// Type of the value
 		Type type;
 
 		/// The value if type==Type::string
-		/// It's seperate because std::string is non-trivial and should not be part of a union.
+		/// It's separate because std::string is non-trivial and should not be part of a union.
 		std::string string;
 
 		/// The value if type==Type::octet_string
-		/// It's seperate because std::vector is non-trivial and should not be part of a union.
+		/// It's separate because std::vector is non-trivial and should not be part of a union.
 		std::vector<uint8_t> octet_string;
 
 		/// Anonymous union containing the value if type!=Tyoe::string
