@@ -142,6 +142,7 @@ void Device::set_entry(const uint16_t index, const uint8_t subindex, const Value
 	entry.set_value(value);
 	if (access_method==WriteAccessMethod::sdo || (access_method==WriteAccessMethod::use_default && entry.write_access_method==WriteAccessMethod::sdo)) {
 		DEBUG_LOG("[Device::set_entry] SDO update on write.");
+		std::cout<<"[Device::set_entry] SDO update on write.)";
 		set_entry_via_sdo(entry.index, entry.subindex, value);
 	}
 }
@@ -480,6 +481,17 @@ void Device::print_dictionary() const {
 
 }
 
+void Device::print_operations() const{
+	for (const auto &op : m_operations){
+		std::cout << op.first << std::endl;
+	}
+}
+
+void Device::print_constants() const{
+	for (const auto &con : m_constants){
+		std::cout << con.first << " " << con.second.to_string() << std::endl;
+	}
+}
 void Device::read_complete_dictionary() {
 	for (auto& pair : m_dictionary) {
 		try {

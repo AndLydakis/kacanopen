@@ -268,7 +268,10 @@ namespace kaco {
 
 		/// Prints the dictionary together with currently cached values to command line.
 		void print_dictionary() const;
-
+		
+		void print_operations() const;
+		
+		void print_constants() const;
 		/// Fetches all dictionary entries from the device.
 		/// Afterwards, all values exist in cache and can for
 		/// example be printed via print_dictionary().
