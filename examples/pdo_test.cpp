@@ -42,25 +42,29 @@
 int vel = 0;
 
 void joy_callback(const sensor_msgs::JoyConstPtr& msg){
-    vel = msg->axes[4];
+    vel = msg->axes[4] * 1000;
 }
 
 int main(int argc, char** argv) {
-
+    
+    if (argc < 3){
+        std::cout << "Too few arguments, exiting\n";
+        return EXIT_FAILURE;
+    }
     // ----------- //
     // Preferences //
     // ----------- //
 
     // The node ID of the slave we want to communicate with.
-    const uint8_t node_id = 2;
+    const uint8_t node_id = 1;
 
     // Set the name of your CAN bus. "slcan0" is a common bus name
     // for the first SocketCAN device on a Linux system.
-    const std::string busname = "slcan0";
+    const std::string busname = argv[1];
 
     // Set the baudrate of your CAN bus. Most drivers support the values
     // "1M", "500K", "125K", "100K", "50K", "20K", "10K" and "5K".
-    const std::string baudrate = "500K";
+    const std::string baudrate = argv[2];
 
     // -------------- //
     // Initialization //
@@ -79,7 +83,6 @@ int main(int argc, char** argv) {
 
     bool found_device = false;
     size_t device_index;
-
 
     while (!found_device) {
 
@@ -138,13 +141,46 @@ int main(int argc, char** argv) {
     } catch (const kaco::canopen_error &error) {
         std::cout << "Getting manufacturer information failed: " << error.what() << std::endl;
     }
+    
+    device.read_complete_dictionary();
+    device.print_dictionary();
+    device.print_constants();
+    device.print_operations();
+   
+    device.add_receive_pdo_mapping(0x181, "vl_target_velocity", 0);
+    //device.add_receive_pdo_mapping(0x181, "vl_target_velocity_actual", 2);
 
+    device.add_receive_pdo_mapping(0x281, "position_actual_value", 0);
+    device.add_receive_pdo_mapping(0x281, "position_actual_value*", 3);
+
+    device.add_receive_pdo_mapping(0x318, "statusword", 0);
+    
+    device.add_transmit_pdo_mapping(0x201, {{"vl_target_velocity", 0}});
+
+    device.set_entry("modes_of_operation", device.get_constant("velocity_mode"));
+    //device.execute("set_controlword_flag", "controlword_enable_voltage");
+    device.execute("enable_operation");
+    device.execute("set_controlword_flag", "controlword_halt");
+    device.set_entry("vl_target_velocity", (int16_t) 0);
+    device.execute("unset_controlword_flag", "controlword_halt");
     ros::init(argc, argv, "canopen_test_node");
     ros::NodeHandle nh;
     ros::Subscriber sub = nh.subscribe("joy", 10, joy_callback);
+    int counter = 0;
     while (ros::ok()) {
+        //ROS_ERROR("%d", counter);
         try {
-
+	    //device.execute("set_target_velocity", (int16_t) vel);
+	    device.set_entry("vl_target_velocity", (int16_t) vel, kaco::WriteAccessMethod::cache);
+            counter ++;
+            counter = counter%100;
+            if (counter == 0){
+               std::cout << "Reading target velocity: " << device.get_entry("vl_target_velocity", kaco::ReadAccessMethod::cache) << std::endl;
+	        std::cout << "Reading motor position: " << device.get_entry("position_actual_value", kaco::ReadAccessMethod::cache)  << std::endl;
+		std::cout << "Reading internal motor position: " << device.get_entry("position_actual_value*", kaco::ReadAccessMethod::cache) << std::endl;
+                std::cout << "Status: " << device.get_entry("statusword") << std::endl;
+            }
+            ros::spinOnce();
         } catch (const kaco::canopen_error &error) {
             std::cout << "KaCanOpen Error: " << error.what() << std::endl;
         }

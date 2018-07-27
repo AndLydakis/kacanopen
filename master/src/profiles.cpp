@@ -47,6 +47,14 @@ namespace kaco {
 						return Value(); // invalid value (return value not needed)
 					}
 				},
+			        {
+					"disable_operation",
+					[](Device& device, const Value&) -> Value {
+						device.set_entry("controlword", (uint16_t) 0x0007);
+                                                device.execute("unset_controlword_flag", "controlword_enable_operation");
+						return Value();
+					}
+				},
 				{
 					"set_controlword_flag",
 					[](Device& device,const Value& flag_name) -> Value {
@@ -74,6 +82,16 @@ namespace kaco {
 						device.set_entry("Target position", target_position);
 						device.execute("set_controlword_flag","controlword_pp_new_set_point");
 						device.execute("unset_controlword_flag","controlword_pp_new_set_point");
+						return Value();
+					}
+				},
+				{
+					"set_target_velocity",
+					[](Device& device, const Value& target_velocity) -> Value{
+						DEBUG_LOG("Set target vel to " << target_velocity);
+//						device.execute("set_controlword_flag", "controlword_halt");
+						device.set_entry("vl_target_velocity", target_velocity);
+//						device.execute("unset_controlword_flag", "controlword_halt");
 						return Value();
 					}
 				}

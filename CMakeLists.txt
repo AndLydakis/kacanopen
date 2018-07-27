@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 
 # Use g++-4.9 if there is also an older g++ version on the system
 if("${CMAKE_CXX_COMPILER}" STREQUAL "" OR "${CMAKE_CXX_COMPILER}" STREQUAL "gcc" OR "${CMAKE_CXX_COMPILER}" STREQUAL "g++")
-	find_program(NEWER_GNU_CXX_COMPILER g++-4.9)
+	find_program(NEWER_GNU_CXX_COMPILER g++-5)
 	if (NOT "${NEWER_GNU_CXX_COMPILER}" STREQUAL "")
 		set(CMAKE_CXX_COMPILER ${NEWER_GNU_CXX_COMPILER})
 		message("Using ${CMAKE_CXX_COMPILER} as compiler.")

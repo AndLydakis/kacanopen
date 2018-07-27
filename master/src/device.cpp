@@ -142,7 +142,7 @@ void Device::set_entry(const uint16_t index, const uint8_t subindex, const Value
 	entry.set_value(value);
 	if (access_method==WriteAccessMethod::sdo || (access_method==WriteAccessMethod::use_default && entry.write_access_method==WriteAccessMethod::sdo)) {
 		DEBUG_LOG("[Device::set_entry] SDO update on write.");
-		std::cout<<"[Device::set_entry] SDO update on write.)";
+		std::cout<<"[Device::set_entry] SDO update on write.)\n";
 		set_entry_via_sdo(entry.index, entry.subindex, value);
 	}
 }
