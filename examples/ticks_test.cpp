@@ -39,24 +39,15 @@
 #include "ros/ros.h"
 #include "sensor_msgs/Joy.h"
 
-int vel = 0;
 bool reset = false;
 
-void joy_callback(const sensor_msgs::JoyConstPtr& msg){
-    vel = msg->axes[4] * 100;
-    if(msg->buttons[0]==1){
-	reset = true;
-    }else{
-	reset = false;
-    }
+void joy_callback(const sensor_msgs::Joy::ConstPtr& msg){
+    if (msg->buttons[0] == 1) reset = true;
+    else reset = false;
 }
 
 int main(int argc, char** argv) {
-    
-    if (argc < 3){
-        std::cout << "Too few arguments, exiting\n";
-        return EXIT_FAILURE;
-    }
+
     // ----------- //
     // Preferences //
     // ----------- //
@@ -147,61 +138,44 @@ int main(int argc, char** argv) {
     } catch (const kaco::canopen_error &error) {
         std::cout << "Getting manufacturer information failed: " << error.what() << std::endl;
     }
-    
-    device.read_complete_dictionary();
-    device.print_dictionary();
-    device.print_constants();
-    device.print_operations();
-   
-    device.add_receive_pdo_mapping(0x181, "vl_target_velocity", 0);
-    //device.add_receive_pdo_mapping(0x181, "vl_target_velocity_actual", 2);
 
-    device.add_receive_pdo_mapping(0x281, "position_actual_value", 0);
-    device.add_receive_pdo_mapping(0x281, "position_actual_value*", 3);
+    std::cout << "The following should fail on devices which are not CiA-402 motors." << std::endl;
+    try {
 
-    device.add_receive_pdo_mapping(0x318, "statusword", 0);
-    
-    device.add_transmit_pdo_mapping(0x201, {{"vl_target_velocity", 0}});
+        std::cout << "CiA-402: Set position mode using a built-in constant (see master/src/profiles.cpp)..."
+                  << std::endl;
+        device.set_entry("modes_of_operation", device.get_constant("profile_position_mode"));
 
-    device.set_entry("modes_of_operation", device.get_constant("velocity_mode"));
-    //device.set_entry("modes_of_operation", device.get_constant("profile_position_mode"));
-    device.execute("enable_operation");
-    device.execute("set_controlword_flag", "controlword_halt");
-    device.set_entry("vl_target_velocity", (int16_t) 0);
-    device.execute("unset_controlword_flag", "controlword_halt");
-    ros::init(argc, argv, "canopen_test_node");
+        std::cout << "CiA-402: Enable operation using a built-in operation (see master/src/profiles.cpp)..."
+                  << std::endl;
+        device.execute("enable_operation");
+
+    } catch (const kaco::canopen_error &error) {
+        std::cout << "CiA-402 failed: " << error.what() << std::endl;
+    }
+
+    long current_tick, tick_diff, starting_tick = int32_t(device.get_entry("position_actual_value*"));
+    long resolution = 65536;
+
+    ros::init(argc, argv, "ticks_test");
     ros::NodeHandle nh;
-    ros::Subscriber sub = nh.subscribe("joy", 10, joy_callback);
-    int counter = 0;
-    long starting_ticks = int32_t(device.get_entry("position_actual_value", kaco::ReadAccessMethod::cache));
-    long starting_internal = int32_t(device.get_entry("position_actual_value*", kaco::ReadAccessMethod::cache));
-    long current_ticks_internal = 0;
-    long current_ticks = 0;
-    long target_ticks = starting_ticks + 1024;
+    ros::Subscriber s = nh.subscribe("/joy", 10, joy_callback);
+
     while (ros::ok()) {
         try {
-	    device.execute("set_target_velocity", (int16_t) vel);
-	    //device.set_entry("vl_target_velocity", (int16_t) vel, kaco::WriteAccessMethod::cache);
-            counter ++;
-            counter = counter%100;
-            if (counter == 0){
-                //device.execute("set_target_position", (int32_t) target_ticks);
-               	//std::this_thread::sleep_for(std::chrono::seconds(10));
-                //target_ticks += 1024;
-                std::cout << "Status: " << device.get_entry("statusword") << std::endl;
-                std::cout << "Reading target velocity: " << device.get_entry("vl_target_velocity", kaco::ReadAccessMethod::cache) << std::endl;
-                current_ticks = int32_t(device.get_entry("position_actual_value", kaco::ReadAccessMethod::cache));
-                current_ticks_internal = int32_t(device.get_entry("position_actual_value*", kaco::ReadAccessMethod::cache));
-	        std::cout << "Reading motor position: " << abs(current_ticks - starting_ticks)  << "(" << current_ticks << ")" << std::endl;
-		std::cout << "Reading internal motor position: " << abs(current_ticks_internal - starting_internal) << "(" << current_ticks_internal << ")/" << target_ticks  << std::endl;
-            }
-            if (reset == true){
-		starting_ticks = current_ticks;
-                starting_internal = current_ticks_internal;
-            }
-            ros::spinOnce();
+            current_tick = int32_t(device.get_entry("position_actual_value"));
+            tick_diff = abs(starting_tick - current_tick);
+            std::cout << tick_diff << "/" << resolution << std::endl;
+	    ros::spinOnce();
+            if (reset){
+		starting_tick = current_tick;
+		reset = false;
+	    }
         } catch (const kaco::canopen_error &error) {
-            std::cout << "KaCanOpen Error: " << error.what() << std::endl;
+            std::cout << "CiA-402 failed: " << error.what() << std::endl;
         }
+
     }
+
+    return EXIT_SUCCESS;
 }
