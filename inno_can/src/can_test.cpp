@@ -9,42 +9,42 @@
 void testPositionAbsolute(CanOpenMotor *motor, int target, int threshold) {
     std::cout << "Test sending positive absolute target position " << target << " with threshold: " << threshold
               << std::endl;
-    motor->readCurrent_position();
+    motor->readCurrentPosition();
     motor->readCurrent_position_internal();
-    int32_t starting_position = motor->getCurrent_position();
-    int32_t starting_position_internal = motor->getCurrent_position_internal();
+    int32_t starting_position = motor->getCurrentPosition();
+    int32_t starting_position_internal = motor->getCurrentPositionInternal();
     std::cout << "Starting position :" << starting_position << std::endl;
     std::cout << "Starting position internal :" << starting_position_internal << std::endl;
-    motor->setTarget_position(starting_position + target);
+    motor->setTargetPosition(starting_position + target);
 
     std::cout << "Test reading target position\n";
-    int32_t target_position = motor->getTarget_position();
+    int32_t target_position = motor->getTargetPosition();
     assert(target_position == starting_position + target);
     std::cout << "Target position: " << target_position << std::endl;
     std::cout << "Sleeping to allow motor to move\n";
     usleep(3000000);
-    assert(abs(motor->getCurrent_position() - starting_position) <= (abs(target) + threshold));
+    assert(abs(motor->getCurrentPosition() - starting_position) <= (abs(target) + threshold));
 }
 
 void testPositionRelative(CanOpenMotor *motor, int target, int threshold) {
     std::cout << "Test sending positive relative target position " << target << " with threshold: " << threshold
               << std::endl;
-    motor->readCurrent_position();
+    motor->readCurrentPosition();
     motor->readCurrent_position_internal();
-    int32_t starting_position = motor->getCurrent_position();
-    int32_t starting_position_internal = motor->getCurrent_position_internal();
+    int32_t starting_position = motor->getCurrentPosition();
+    int32_t starting_position_internal = motor->getCurrentPositionInternal();
     std::cout << "Starting position :" << starting_position << std::endl;
     std::cout << "Starting position internal :" << starting_position_internal << std::endl;
-    motor->setTarget_position_relative(target);
+    motor->setTargetPositionRelative(target);
 
     std::cout << "Test reading target position\n";
-    int32_t target_position = motor->getTarget_position();
+    int32_t target_position = motor->getTargetPosition();
     assert(target_position == target);
     std::cout << "Target position: " << target_position << std::endl;
     std::cout << "Sleeping to allow motor to move\n";
     usleep(3000000);
-    std::cout << abs(motor->getCurrent_position() - starting_position) << std::endl;
-    assert(abs(motor->getCurrent_position() - starting_position) <= (abs(target) + threshold));
+    std::cout << abs(motor->getCurrentPosition() - starting_position) << std::endl;
+    assert(abs(motor->getCurrentPosition() - starting_position) <= (abs(target) + threshold));
 }
 
 void testSwitchToVelocityMode(CanOpenMotor *motor) {
@@ -61,15 +61,15 @@ void testSwitchToPositionMode(CanOpenMotor *motor) {
 
 void testVelocity(CanOpenMotor *motor, int velocity) {
     std::cout << "Test sending and reading target velocity\n";
-    motor->setTarget_velocity(velocity);
+    motor->setTargetVelocity(velocity);
     usleep(5000000);
-    motor->readTarget_velocity();
-    std::cout << "Target velocity " << motor->getTarget_velocity() << std::endl;
-    assert(motor->getTarget_velocity() == 3000);
+    motor->readTargetVelocity();
+    std::cout << "Target velocity " << motor->getTargetVelocity() << std::endl;
+    assert(motor->getTargetVelocity() == 3000);
     std::cout << "Test stopping the motor\n";
-    motor->setTarget_velocity(0);
+    motor->setTargetVelocity(0);
     usleep(2000000);
-    assert(motor->getCurrent_velocity() == 0);
+    assert(motor->getCurrentVelocity() == 0);
 }
 
 void

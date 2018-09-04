@@ -14,50 +14,49 @@ CanOpenMotor::CanOpenMotor(size_t id_, int baudrate_, kaco::Master &master_) : C
                                                                                              baudrate_,
                                                                                              master_) {}
 
-int32_t CanOpenMotor::getCurrent_position() {
-    readCurrent_position();
+int32_t CanOpenMotor::getCurrentPosition() {
+    readCurrentPosition();
     return current_position;
 }
 
-void CanOpenMotor::setCurrent_position(int32_t current_position) {
+void CanOpenMotor::setCurrentPosition(int32_t current_position) {
     CanOpenMotor::current_position = current_position;
 }
 
-int32_t CanOpenMotor::getCurrent_position_internal() {
-    try { readCurrent_position_internal(); } catch (...) {}
+int32_t CanOpenMotor::getCurrentPositionInternal() {
+    readCurrent_position_internal();
     return current_position_internal;
 }
 
-void CanOpenMotor::setCurrent_position_internal(int32_t current_position_internal) {
+void CanOpenMotor::setCurrentPositionInternal(int32_t current_position_internal) {
     CanOpenMotor::current_position_internal = current_position_internal;
 }
 
-int32_t CanOpenMotor::getTarget_position() {
-    readTarget_position();
+int32_t CanOpenMotor::getTargetPosition() {
+    readTargetPosition();
     return target_position;
 }
 
-void CanOpenMotor::setTarget_position(int32_t target_position) {
-//    device.set_entry("target_position", target_position);
+void CanOpenMotor::setTargetPosition(int32_t target_position) {
     device.execute("set_target_position", target_position);
-    readTarget_position();
+    readTargetPosition();
 }
 
-int CanOpenMotor::getTarget_velocity() const {
+int CanOpenMotor::getTargetVelocity() const {
     return target_velocity;
 }
 
-void CanOpenMotor::setTarget_velocity(int target_velocity) {
+void CanOpenMotor::setTargetVelocity(int target_velocity) {
     device.execute("set_target_velocity", (int16_t) target_velocity);
-    readTarget_velocity();
+    readTargetVelocity();
 }
 
-int CanOpenMotor::getCurrent_velocity() {
-    readTarget_velocity();
+int CanOpenMotor::getCurrentVelocity() {
+    readCurrentVelocity();
     return current_velocity;
 }
 
-void CanOpenMotor::setCurrent_velocity(int current_velocity) {
+void CanOpenMotor::setCurrentVelocity(int current_velocity) {
     CanOpenMotor::current_velocity = static_cast<int16_t>(current_velocity);
 }
 
@@ -69,52 +68,46 @@ void CanOpenMotor::setStatus_word(unsigned int status_word) {
     CanOpenMotor::status_word = static_cast<int16_t>(status_word);
 }
 
-void CanOpenMotor::readCurrent_position() {
+void CanOpenMotor::readCurrentPosition() {
     try { current_position = int32_t(get_attribute("position_actual_value")); }
     catch (const kaco::canopen_error &error) {
-        std::cout << "Could not read position\n";
-        std::cout << error.what() << std::endl;
+        std::cout << "Could not read position (SDO 0x6064/0): " << error.what() << std::endl;
     }
 }
 
 void CanOpenMotor::readCurrent_position_internal() {
     try { current_position_internal = int32_t(get_attribute("position_actual_value*")); }
     catch (const kaco::canopen_error &error) {
-        std::cout << "Could not read internal position\n";
-        std::cout << error.what() << std::endl;
+        std::cout << "Could not read internal position (SDO 0x6063/0): " << error.what() << std::endl;
     }
 }
 
-void CanOpenMotor::readTarget_position() {
+void CanOpenMotor::readTargetPosition() {
     try { target_position = int32_t(get_attribute("target_position")); }
     catch (const kaco::canopen_error &error) {
-        std::cout << "Could not read target position\n";
-        std::cout << error.what() << std::endl;
+        std::cout << "Could not read target position (SDO 0x607a): " << error.what() << std::endl;
     }
 
 }
 
-void CanOpenMotor::readTarget_velocity() {
+void CanOpenMotor::readTargetVelocity() {
     try { target_velocity = int16_t(get_attribute("vl_target_velocity")); }
     catch (const kaco::canopen_error &error) {
-        std::cout << "Could not read target velocity\n";
-        std::cout << error.what() << std::endl;
+        std::cout << "Could not read target velocity (SDO 0x6042): " << error.what() << std::endl;
     }
 }
 
-void CanOpenMotor::readCurrent_velocity() {
+void CanOpenMotor::readCurrentVelocity() {
     try { current_velocity = int16_t(get_attribute("velocity_actual_value")); }
     catch (const kaco::canopen_error &error) {
-        std::cout << "Could not read current velocity\n";
-        std::cout << error.what() << std::endl;
+        std::cout << "Could not read current velocity (SDO 0x606C/0)" << error.what() << std::endl;
     }
 }
 
 void CanOpenMotor::readStatus_word() {
     try { status_word = int16_t(get_attribute("status_word")); }
     catch (const kaco::canopen_error &error) {
-        std::cout << "Could not read status word\n";
-        std::cout << error.what() << std::endl;
+        std::cout << "Could not read status word (SDO 0x6041)" << error.what() << std::endl;
     }
 }
 
@@ -179,9 +172,9 @@ bool CanOpenMotor::enableProfileTorqueMode() {
     }
 }
 
-void CanOpenMotor::setTarget_position_relative(int32_t target_position_) {
+void CanOpenMotor::setTargetPositionRelative(int32_t target_position_) {
     device.execute("set_target_position_relative", target_position_);
-    readTarget_position();
+    readTargetPosition();
 }
 
 void CanOpenMotor::calibrate() {
@@ -190,15 +183,15 @@ void CanOpenMotor::calibrate() {
     setModeOfOperation(PROFILE_POSITION);
     assert(getModeOfOperation() == PROFILE_POSITION);
     readCurrent_position_internal();
-    readCurrent_position();
+    readCurrentPosition();
     try {
         for (size_t i = 0; i < DEFAULT_CALIB_RUNS; i++) {
-            long starting_position = getCurrent_position();
-            this->setTarget_position_relative(int32_t(1024));
+            long starting_position = getCurrentPosition();
+            this->setTargetPositionRelative(int32_t(1024));
             usleep(2000000);
-            long diff = getCurrent_position() - starting_position;
+            long diff = getCurrentPosition() - starting_position;
             std::cout << "Calibration run " << i + 1 << " starting in position " << starting_position
-                      << " and ending in position " << getCurrent_position() << std::endl;
+                      << " and ending in position " << getCurrentPosition() << std::endl;
             sum += (diff);
         }
 
@@ -223,25 +216,27 @@ void CanOpenMotor::print() {
     std::cout << "###############################################\n";
 }
 
-int32_t CanOpenMotor::getVelocityDemandValue() {
-    return device.get_entry("vl_velocity_demand");
-}
 
 uint16_t CanOpenMotor::getVelocityWindow() {
-    return device.get_entry("velocity_window");
-}
-
-void CanOpenMotor::setVelocityDemandValue(int32_t vel_demand_val) {
-    device.set_entry("vl_velocity_demand", vel_demand_val);
+    try {
+        return device.get_entry("velocity_window");
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read velocity_window (SDO 0x606D/0): " << error.what() << std::endl;
+        return static_cast<uint16_t>(-1);
+    }
 }
 
 void CanOpenMotor::setVelocityWindow(int16_t velocity_window) {
-    device.set_entry("vl_velocity_window", velocity_window);
+    try {
+        device.set_entry("vl_velocity_window", velocity_window);
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set vl_velocity_window(SDO 0x606D/0): " << error.what() << std::endl;
+    }
 }
 
+/***********************************************************************************/
 CanOpenMotor::velocity_accel CanOpenMotor::getVelocityAcceleration(uint8_t direction) {
     assert((direction == 0) || (direction == 1));
-
     velocity_accel va = {0, 0};
     try {
         std::vector<uint8_t> delta_speed = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6048 + direction,
@@ -252,7 +247,8 @@ CanOpenMotor::velocity_accel CanOpenMotor::getVelocityAcceleration(uint8_t direc
                                                                  0x0002);
         memcpy(&va.delta_time.value, &delta_time[0], std::min(delta_time.size(), sizeof(uint16_t)));
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while reading velocity acceleration/deceleration: " << error.what();
+        std::cout << "Could not read velocity acceleration/deceleration (SDO 0x6048/01-02):  " << error.what()
+                  << std::endl;
     }
     return va;
 }
@@ -272,10 +268,12 @@ void CanOpenMotor::setVelocityAcceleration(uint8_t direction, CanOpenMotor::velo
         master.core.sdo.download(static_cast<uint8_t>(getId()), 0x6048 + direction, 0x0002,
                                  static_cast<uint32_t>(dtime.size()), dtime);
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting velocity acceleration/deceleration: " << error.what();
+        std::cout << "Could not set velocity acceleration/deceleration (SDO 0x6048-9/01-02):  " << error.what()
+                  << std::endl;
     }
 }
 
+/***********************************************************************************/
 CanOpenMotor::min_max_velocity CanOpenMotor::getMinMaxVelocity() {
     min_max_velocity mmv{0, 0};
     try {
@@ -285,7 +283,7 @@ CanOpenMotor::min_max_velocity CanOpenMotor::getMinMaxVelocity() {
         std::vector<uint8_t> max_vel = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6046, 0x0002);
         memcpy(&mmv.max_velocity.value, &max_vel[0], std::min(max_vel.size(), sizeof(uint16_t)));
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while reading min/max velocity limits: " << error.what();
+        std::cout << "Could not read min/max velocity limits (SDO 0x6046/01-02): " << error.what() << std::endl;
     }
     return mmv;
 }
@@ -307,8 +305,23 @@ void CanOpenMotor::setMinMaxVelocity(uint32_t min, uint32_t max) {
                                  max_vel);
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting min/max velocity limits: " << error.what();
+        std::cout << "Could not set min/max velocity limits (SDO 0x6046/01-02): " << error.what() << std::endl;
     }
+}
+
+/***********************************************************************************/
+CanOpenMotor::velocity_accel CanOpenMotor::getQuickStopRamp() {
+    velocity_accel qs = {0, 0};
+    try {
+        std::vector<uint8_t> delta_speed = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x604A, 0x0001);
+        memcpy(&qs.delta_speed.value, &delta_speed[0], std::min(delta_speed.size(), sizeof(uint32_t)));
+
+        std::vector<uint8_t> delta_time = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x604A, 0x0002);
+        memcpy(&qs.delta_time.value, &delta_time[0], std::min(delta_time.size(), sizeof(uint16_t)));
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read velocity quick stop ramp (SDO 0x604A): " << error.what() << std::endl;
+    }
+    return qs;
 }
 
 void CanOpenMotor::setQuickStopRamp(uint32_t delta_speed, uint16_t delta_time) {
@@ -332,24 +345,11 @@ void CanOpenMotor::setQuickStopRamp(CanOpenMotor::velocity_accel quick_ramp) {
                                  dtime);
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting velocity quick stop ramp: " << error.what();
+        std::cout << "Could not set velocity quick stop ramp (SDO 0x604A): " << error.what() << std::endl;
     }
 }
 
-CanOpenMotor::velocity_accel CanOpenMotor::getQuickStopRamp() {
-    velocity_accel qs = {0, 0};
-    try {
-        std::vector<uint8_t> delta_speed = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x604A, 0x0001);
-        memcpy(&qs.delta_speed.value, &delta_speed[0], std::min(delta_speed.size(), sizeof(uint32_t)));
-
-        std::vector<uint8_t> delta_time = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x604A, 0x0002);
-        memcpy(&qs.delta_time.value, &delta_time[0], std::min(delta_time.size(), sizeof(uint16_t)));
-    } catch (kaco::canopen_error &error) {
-        std::cout << "Error while reading velocity acceleration/deceleration: " << error.what();
-    }
-    return qs;
-}
-
+/***********************************************************************************/
 CanOpenMotor::fraction_32_32 CanOpenMotor::getDimensionFactor() {
     fraction_32_32 qs = {0, 0};
     try {
@@ -359,7 +359,7 @@ CanOpenMotor::fraction_32_32 CanOpenMotor::getDimensionFactor() {
         std::vector<uint8_t> delta_time = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x604C, 0x0002);
         memcpy(&qs.denominator.value, &delta_time[0], std::min(delta_time.size(), sizeof(uint16_t)));
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while reading velocity acceleration/deceleration: " << error.what();
+        std::cout << "Could not read velocity quick stop ramp (SDO 0x604c): " << error.what() << std::endl;
     }
     return qs;
 }
@@ -384,10 +384,11 @@ void CanOpenMotor::setDimensionFactor(CanOpenMotor::fraction_32_32 new_dimension
                                  dtime);
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting velocity quick stop ramp: " << error.what();
+        std::cout << "Could not set velocity quick stop ramp (SDO 0x604c): " << error.what() << std::endl;
     }
 }
 
+/***********************************************************************************/
 uint32_t CanOpenMotor::getProfileAcceleration(uint8_t direction) {
     union_8_32 prof_acc_union(0);
     try {
@@ -395,7 +396,8 @@ uint32_t CanOpenMotor::getProfileAcceleration(uint8_t direction) {
         memcpy(&prof_acc_union.value, &prof_acc[0], std::min(prof_acc.size(), sizeof(uint32_t)));
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while reading velocity acceleration/deceleration: " << error.what();
+        std::cout << "Could not read profile/deceleration acceleration (SDO" << 0x6083 + direction << "): "
+                  << error.what() << std::endl;
     }
     return prof_acc_union.value;
 }
@@ -413,10 +415,12 @@ void CanOpenMotor::setProfileAcceleration(uint8_t direction, union_8_32 new_acce
                                  static_cast<uint32_t>(acc.size()), acc);
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting profile acceleration: " << error.what();
+        std::cout << "Could not set profile/deceleration acceleration (SDO" << 0x6083 + direction << "): "
+                  << error.what() << std::endl;
     }
 }
 
+/***********************************************************************************/
 uint32_t CanOpenMotor::getQuickStopDeceleration() {
     union_8_32 quick_stop_deceleration(0);
     try {
@@ -424,7 +428,7 @@ uint32_t CanOpenMotor::getQuickStopDeceleration() {
         memcpy(&quick_stop_deceleration.value, &prof_acc[0], std::min(prof_acc.size(), sizeof(uint32_t)));
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while reading velocity acceleration/deceleration: " << error.what();
+        std::cout << "Could not read velocity acceleration/deceleration (SDO 0x6085): " << error.what() << std::endl;
     }
     return quick_stop_deceleration.value;
 }
@@ -442,10 +446,11 @@ void CanOpenMotor::setQuickStopDeceleration(CanOpenMotor::union_8_32 new_decel) 
                                  static_cast<uint32_t>(dec.size()), dec);
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting quick stop deceleration: " << error.what();
+        std::cout << "Could not set quick stop deceleration (SDO 0x6085): " << error.what() << std::endl;
     }
 }
 
+/***********************************************************************************/
 uint32_t CanOpenMotor::getMaxAcceleration(uint8_t direction) {
     union_8_32 prof_acc_union(0);
     try {
@@ -453,7 +458,8 @@ uint32_t CanOpenMotor::getMaxAcceleration(uint8_t direction) {
         memcpy(&prof_acc_union.value, &prof_acc[0], std::min(prof_acc.size(), sizeof(uint32_t)));
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while reading velocity acceleration/deceleration: " << error.what();
+        std::cout << "Could not read maximum acceleration/deceleration (SDO" << 0x60C5 + direction << "): "
+                  << error.what() << std::endl;
     }
     return prof_acc_union.value;
 }
@@ -471,15 +477,17 @@ void CanOpenMotor::setMaxAcceleration(uint8_t direction, CanOpenMotor::union_8_3
                                  static_cast<uint32_t>(acc.size()), acc);
 
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting maximum acceleration/deceleration: " << error.what();
+        std::cout << "Could not set maximum acceleration/deceleration (SDO" << 0x60C5 + direction << "): "
+                  << error.what() << std::endl;
     }
 }
 
+/***********************************************************************************/
 int16_t CanOpenMotor::getTargetTorque() {
     try {
         return device.get_entry("target_torque");
     } catch (kaco::canopen_error &error) {
-        std::cout << "Could not read target torque: " << error.what() << std::endl;
+        std::cout << "Could not read target torque (SDO 0x6071/0)(torque mode): " << error.what() << std::endl;
         return -1;
     }
 }
@@ -488,18 +496,340 @@ void CanOpenMotor::setTargetTorque(int16_t target_torque) {
     try {
         device.set_entry("target_torque", target_torque);
     } catch (kaco::canopen_error &error) {
-        std::cout << "Could not read target torque: " << error.what() << std::endl;
+        std::cout << "Could not read target torque (SDO 0x6071/0)(torque mode): " << error.what() << std::endl;
     }
 }
 
+/***********************************************************************************/
 uint32_t CanOpenMotor::getMaxProfileVelocity() {
     try {
         return device.get_entry("max_profile_velocity");
     } catch (kaco::canopen_error &error) {
-        std::cout << "max_profile_velocity: " << error.what() << std::endl;
+        std::cout << "Could not read max_profile_velocity (SDO 0x607f)(torque mode): " << error.what() << std::endl;
         return 0;
     }
 }
+
+void CanOpenMotor::setMaxProfileVelocity(uint32_t target_velocity) {
+    try {
+        device.set_entry("max_profile_velocity", target_velocity);
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set max_profile_velocity (SDO 0x607f)(torque mode): : " << error.what() << std::endl;
+    }
+}
+
+/***********************************************************************************/
+uint32_t CanOpenMotor::getMaxProfileVelocityInPPMode() {
+    try {
+        return device.get_entry("profile_velocity_in_pp_mode");
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read profile_velocity_in_pp_mode (SDO 0x6081)(profile velocity mode): " << error.what()
+                  << std::endl;
+        return 0;
+    }
+}
+
+void CanOpenMotor::setMaxProfileVelocityInPPMode(uint32_t target_velocity) {
+    try {
+        device.set_entry("profile_velocity_in_pp_mode", target_velocity);
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set profile_velocity_in_pp_mode (SDO 0x6081)(profile velocity mode): " << error.what()
+                  << std::endl;
+    }
+}
+
+/***********************************************************************************/
+int16_t CanOpenMotor::getQuickStopOptionCode() {
+    union_8_16s qsoc_union(0);
+    try {
+        std::vector<uint8_t> prof_acc = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x605A, 0x0);
+        memcpy(&qsoc_union.value, &prof_acc[0], std::min(prof_acc.size(), sizeof(int16_t)));
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read quick stop option code (SDO 0x605A) " << error.what() << std::endl;
+    }
+    return qsoc_union.value;
+}
+
+/***********************************************************************************/
+int32_t CanOpenMotor::getPositionDemandValue() {
+    try {
+        return device.get_entry("position_demand_value");
+    } catch (...) {}
+    union_8_32s pdv_union(0);
+    try {
+        std::vector<uint8_t> prof_acc = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6062, 0x0);
+        memcpy(&pdv_union.value, &prof_acc[0], std::min(prof_acc.size(), sizeof(int32_t)));
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read position demand value (SDO 0x6062) " << error.what() << std::endl;
+    }
+    return pdv_union.value;
+}
+
+/***********************************************************************************/
+int32_t CanOpenMotor::getHomeOffset() {
+    try {
+        return device.get_entry("home_offset");
+    } catch (...) {}
+    union_8_32s ho_union(0);
+    try {
+        std::vector<uint8_t> prof_acc = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x607C, 0x0);
+        memcpy(&ho_union.value, &prof_acc[0], std::min(prof_acc.size(), sizeof(int32_t)));
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read position demand value (SDO 0x6062) " << error.what() << std::endl;
+    }
+    return ho_union.value;
+}
+
+void CanOpenMotor::setHomeOffset(int32_t new_home_offset) {
+    union_8_32s home_offset(new_home_offset);
+    setHomeOffset(home_offset);
+}
+
+void CanOpenMotor::setHomeOffset(union_8_32s new_home_offset) {
+    try {
+        device.set_entry("home_offset", new_home_offset.value);
+        return;
+    } catch (...) {}
+    try {
+        std::vector<uint8_t> acc(new_home_offset.array,
+                                 new_home_offset.array +
+                                 sizeof new_home_offset.array / sizeof new_home_offset.array[0]);
+        master.core.sdo.download(static_cast<uint8_t>(getId()), 0x607C, 0x0,
+                                 static_cast<uint32_t>(acc.size()), acc);
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set maximum home offset(SDO 0x607C): " << error.what() << std::endl;
+    }
+}
+
+/***********************************************************************************/
+uint32_t CanOpenMotor::getEndVelocity() {
+    try {
+        return device.get_entry("end_velocity");
+    } catch (...) {}
+    union_8_32 ev_union(0);
+    try {
+        std::vector<uint8_t> prof_acc = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6082, 0x0);
+        memcpy(&ev_union.value, &prof_acc[0], std::min(prof_acc.size(), sizeof(uint32_t)));
+        return ev_union.value;
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read position demand value (SDO 0x6062) " << error.what() << std::endl;
+        return 0;
+    }
+}
+
+void CanOpenMotor::setEndVelocity(uint32_t new_velocity) {
+    union_8_32 new_vel(new_velocity);
+    setEndVelocity(new_vel);
+}
+
+void CanOpenMotor::setEndVelocity(CanOpenMotor::union_8_32 new_velocity) {
+    try {
+        device.set_entry("end_velocity", new_velocity.value);
+        return;
+    } catch (...) {}
+    try {
+        std::vector<uint8_t> vel(new_velocity.array,
+                                 new_velocity.array +
+                                 sizeof new_velocity.array / sizeof new_velocity.array[0]);
+        master.core.sdo.download(static_cast<uint8_t>(getId()), 0x6082, 0x0,
+                                 static_cast<uint32_t>(vel.size()), vel);
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set end velocity (SDO 0x6082): " << error.what() << std::endl;
+    }
+}
+
+/***********************************************************************************/
+int16_t CanOpenMotor::getMotionProfileType() {
+    try {
+        return device.get_entry("motion_profile_type");
+    } catch (...) {}
+    union_8_16s mp_union(0);
+    try {
+        std::vector<uint8_t> prof_type = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6086, 0x0);
+        memcpy(&mp_union.value, &prof_type[0], std::min(prof_type.size(), sizeof(int16_t)));
+        return mp_union.value;
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read motion profile type (SDO 0x6086) " << error.what() << std::endl;
+        return 0;
+    }
+}
+
+void CanOpenMotor::setMotionProfileType(int16_t new_motion_profile_type) {
+    assert((new_motion_profile_type == 0) || (new_motion_profile_type == 1));
+    union_8_16s new_vel(new_motion_profile_type);
+    setMotionProfileType(new_vel);
+}
+
+void CanOpenMotor::setMotionProfileType(CanOpenMotor::union_8_16s new_motion_profile_type) {
+    try {
+        device.set_entry("motion_profile_type", new_motion_profile_type.value);
+        return;
+    } catch (...) {}
+    try {
+        std::vector<uint8_t> vel(new_motion_profile_type.array,
+                                 new_motion_profile_type.array +
+                                 sizeof new_motion_profile_type.array / sizeof new_motion_profile_type.array[0]);
+        master.core.sdo.download(static_cast<uint8_t>(getId()), 0x6086, 0x0,
+                                 static_cast<uint32_t>(vel.size()), vel);
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set end velocity (SDO 0x6082): " << error.what() << std::endl;
+    }
+}
+
+/***********************************************************************************/
+int16_t CanOpenMotor::getVelocityDemandValue() {
+    try {
+        return device.get_entry("velocity_demand");
+    } catch (...) {}
+    union_8_16s vd_union(0);
+    try {
+        std::vector<uint8_t> vel_demand = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6043, 0x0);
+        memcpy(&vd_union.value, &vel_demand[0], std::min(vel_demand.size(), sizeof(int16_t)));
+        return vd_union.value;
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read velocity demand (SDO 0x6043) " << error.what() << std::endl;
+        return 0;
+    }
+}
+
+/***********************************************************************************/
+int16_t CanOpenMotor::getVelocityActualValue() {
+    try {
+        return device.get_entry("velocity_actual_value");
+    } catch (...) {}
+    union_8_16s vav_union(0);
+    try {
+        std::vector<uint8_t> vel_actual_value = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6044, 0x0);
+        memcpy(&vav_union.value, &vel_actual_value[0], std::min(vel_actual_value.size(), sizeof(int16_t)));
+        return vav_union.value;
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read velocity actual value (SDO 0x6044) " << error.what() << std::endl;
+        return 0;
+    }
+}
+
+/***********************************************************************************/
+uint32_t CanOpenMotor::getFollowingErrorWindow() {
+    try {
+        return device.get_entry("following_error_window");
+    } catch (...) {}
+    union_8_32 few_union(0);
+    try {
+        std::vector<uint8_t> few = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6065, 0x0);
+        memcpy(&few_union.value, &few[0], std::min(few.size(), sizeof(uint32_t)));
+        return few_union.value;
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read following error window (SDO 0x6065) " << error.what() << std::endl;
+        return 0;
+    }
+}
+
+void CanOpenMotor::setFollowingErrorWindow(uint32_t new_following_window) {
+    union_8_32 new_window(new_following_window);
+    setFollowingErrorWindow(new_window);
+}
+
+void CanOpenMotor::setFollowingErrorWindow(CanOpenMotor::union_8_32 new_following_window) {
+    try {
+        device.set_entry("following_error_window", new_following_window.value);
+        return;
+    } catch (...) {}
+    try {
+        std::vector<uint8_t> window(new_following_window.array,
+                                    new_following_window.array +
+                                    sizeof new_following_window.array / sizeof new_following_window.array[0]);
+        master.core.sdo.download(static_cast<uint8_t>(getId()), 0x6065, 0x0,
+                                 static_cast<uint32_t>(window.size()), window);
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set following_error_window (SDO 0x6065): " << error.what() << std::endl;
+    }
+}
+
+/***********************************************************************************/
+
+uint16_t CanOpenMotor::getFollowingErrorTimeout() {
+    try {
+        return device.get_entry("following_error_time_out");
+    } catch (...) {}
+    union_8_16 feto_union(0);
+    try {
+        std::vector<uint8_t> feto = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6066, 0x0);
+        memcpy(&feto_union.value, &feto[0], std::min(feto.size(), sizeof(uint16_t)));
+        return feto_union.value;
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read following error timeout (SDO 0x6066) " << error.what() << std::endl;
+        return 0;
+    }
+}
+
+void CanOpenMotor::setFollowingErrorTimeout(uint16_t timeout_ms) {
+    union_8_16 new_timeout(timeout_ms);
+    setFollowingErrorTimeout(new_timeout);
+}
+
+void CanOpenMotor::setFollowingErrorTimeout(CanOpenMotor::union_8_16 new_following_time_out) {
+    try {
+        device.set_entry("following_error_time_out", new_following_time_out.value);
+        return;
+    } catch (...) {}
+    try {
+        std::vector<uint8_t> time_out(new_following_time_out.array,
+                                      new_following_time_out.array +
+                                      sizeof new_following_time_out.array / sizeof new_following_time_out.array[0]);
+        master.core.sdo.download(static_cast<uint8_t>(getId()), 0x6065, 0x0,
+                                 static_cast<uint32_t>(time_out.size()), time_out);
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set following_error_timeout (SDO 0x6066): " << error.what() << std::endl;
+    }
+}
+
+/***********************************************************************************/
+uint32_t CanOpenMotor::getPositionWindow() {
+    try {
+        return device.get_entry("position_window");
+    } catch (...) {}
+    union_8_32 pw_union(0);
+    try {
+        std::vector<uint8_t> feto = master.core.sdo.upload(static_cast<uint8_t>(getId()), 0x6066, 0x0);
+        memcpy(&pw_union.value, &feto[0], std::min(feto.size(), sizeof(uint32_t)));
+        return pw_union.value;
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not read position window (SDO 0x6067) " << error.what() << std::endl;
+        return 0;
+    }
+}
+
+void CanOpenMotor::setPositionWindow(uint32_t new_position_window) {
+    union_8_32 new_timeout(new_position_window);
+    setPositionWindow(new_timeout);
+}
+
+void CanOpenMotor::setPositionWindow(CanOpenMotor::union_8_32 new_position_window) {
+    try {
+        device.set_entry("position_window", new_position_window.value);
+        return;
+    } catch (...) {}
+    try {
+        std::vector<uint8_t> time_out(new_position_window.array,
+                                      new_position_window.array +
+                                      sizeof new_position_window.array / sizeof new_position_window.array[0]);
+        master.core.sdo.download(static_cast<uint8_t>(getId()), 0x6065, 0x0,
+                                 static_cast<uint32_t>(time_out.size()), time_out);
+
+    } catch (kaco::canopen_error &error) {
+        std::cout << "Could not set position window (SDO 0x6067): " << error.what() << std::endl;
+    }
+}
+
+/***********************************************************************************/
 
 CanOpenMotor::~CanOpenMotor() = default;
 
