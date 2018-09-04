@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/ticks_test_node.dir/src/ticks_test.cpp.o  -o ticks_test_node -rdynamic -lkacanopen_core -lkacanopen_master -lkacanopen_ros_bridge 

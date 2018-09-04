@@ -1,0 +1,1 @@
+/usr/bin/c++    -std=c++11 -Wall   CMakeFiles/./ticks_test.dir/src/ticks_test.cpp.o  -o ./ticks_test -rdynamic 

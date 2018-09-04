@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/lydakis/kacanopen/inno_can/src/ticks_test.cpp
+thread
+-
+chrono
+-
+cstdint
+-
+master.h
+/home/lydakis/kacanopen/inno_can/src/master.h
+canopen_error.h
+/home/lydakis/kacanopen/inno_can/src/canopen_error.h
+logger.h
+/home/lydakis/kacanopen/inno_can/src/logger.h
+ros/ros.h
+/home/lydakis/kacanopen/inno_can/src/ros/ros.h
+sensor_msgs/Joy.h
+/home/lydakis/kacanopen/inno_can/src/sensor_msgs/Joy.h
+

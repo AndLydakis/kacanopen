@@ -209,5 +209,6 @@ add_subdirectory(drivers)
 add_subdirectory(core)
 add_subdirectory(master)
 add_subdirectory(examples)
+add_subdirectory(inno_can)
 
 

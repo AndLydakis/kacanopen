@@ -1,0 +1,3 @@
+/home/lydakis/kacanopen/inno_can/CMakeFiles/edit_cache.dir
+/home/lydakis/kacanopen/inno_can/CMakeFiles/rebuild_cache.dir
+/home/lydakis/kacanopen/inno_can/CMakeFiles/ticks_test_node.dir
