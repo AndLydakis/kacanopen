@@ -69,7 +69,7 @@ void testVelocity(CanOpenMotor *motor, int velocity) {
     std::cout << "Test stopping the motor\n";
     motor->setTargetVelocity(0);
     usleep(2000000);
-    assert(motor->getCurrentVelocity() == 0);
+    assert(motor->getVelocityActualValue() == 0);
 }
 
 void
@@ -222,16 +222,14 @@ void testSetMaxAcceleration(CanOpenMotor *motor, uint8_t direction, uint32_t acc
     try {
         motor->setMaxAcceleration(direction, accel);
     } catch (kaco::canopen_error &error) {
-        std::cout << "Error while setting maxacceleration/deceleration: " << error.what();
+        std::cout << "Error while setting max acceleration/deceleration: " << error.what();
     }
 }
 
 
 int main(int argc, char **argv) {
     kaco::Master master;
-    ros::init(argc, argv, "can_test_node");
-    // Set the name of your CAN bus. "slcan0" is a common bus name
-    // for the first SocketCAN device on a Linux system.
+
     const std::string busname = argv[1];
     std::cout << "Opening /dev/pcan" << busname << std::endl;
     // Set the baudrate of your CAN bus. Most drivers support the values
@@ -251,20 +249,18 @@ int main(int argc, char **argv) {
 
     std::cout << num_devices << " devices found on the bus\n";
     assert(num_devices == bus_devices);
-    ros::NodeHandle nh;
     for (size_t i = 0; i < num_devices; ++i) {
         std::cout << "Testing motor " << i + 1 << std::endl;
         std::cout << "Test initializing the device\n";
-        auto *motor = new CanOpenMotor(i + 1, std::stoi(baudrate), nh, master);
+        auto *motor = new CanOpenMotor(i + 1, std::stoi(baudrate), master);
         assert(motor->getId() == i + 1);
         motor->print();
-        std::cout << "***************************************************************************************\n";
-        uint32_t max_allowed_acceleration = 25000000;
-        testSetMaxAcceleration(motor, 1, max_allowed_acceleration);
-        testReadMaxAcceleration(motor, 1, max_allowed_acceleration);
-        testSetMaxAcceleration(motor, 0, max_allowed_acceleration);
-        testReadMaxAcceleration(motor, 0, max_allowed_acceleration);
-
+//        std::cout << "***************************************************************************************\n";
+//        uint32_t max_allowed_acceleration = 25000000;
+//        testSetMaxAcceleration(motor, 1, max_allowed_acceleration);
+//        testReadMaxAcceleration(motor, 1, max_allowed_acceleration);
+//        testSetMaxAcceleration(motor, 0, max_allowed_acceleration);
+//        testReadMaxAcceleration(motor, 0, max_allowed_acceleration);
 //        std::cout << "***************************************************************************************\n";
 //        uint32_t quick_stop_deceleration = 100000;
 //        testSetQuickStopDeceleration(motor, quick_stop_deceleration);
@@ -296,24 +292,24 @@ int main(int argc, char **argv) {
 //        testSetVelocityAcceleration(motor, accel_dspeed, accel_dtime);
 //        testReadVelocityAcceleration(motor, accel_dspeed, accel_dtime);
 //        std::cout << "***************************************************************************************\n";
-//        testSwitchToPositionMode(motor);
-//        std::cout << "***************************************************************************************\n";
-//        int position_command = 1024;
-//        testPositionRelative(motor, position_command, 10);
-//        testPositionRelative(motor, -position_command, 10);
-//        std::cout << "***************************************************************************************\n";
-//        testPositionAbsolute(motor, position_command, 10);
-//        testPositionAbsolute(motor, -position_command, 10);
-//        std::cout << "***************************************************************************************\n";
-//        testSwitchToVelocityMode(motor);
-//        std::cout << "***************************************************************************************\n";
-//        int velocity = 3000;
-//        testVelocity(motor, velocity);
-//        std::cout << "***************************************************************************************\n";
+        testSwitchToPositionMode(motor);
+        std::cout << "***************************************************************************************\n";
+        int position_command = 1024;
+        testPositionRelative(motor, position_command, 10);
+        testPositionRelative(motor, -position_command, 10);
+        std::cout << "***************************************************************************************\n";
+        testPositionAbsolute(motor, position_command, 10);
+        testPositionAbsolute(motor, -position_command, 10);
+        std::cout << "***************************************************************************************\n";
+        testSwitchToVelocityMode(motor);
+        std::cout << "***************************************************************************************\n";
+        int velocity = 3000;
+        testVelocity(motor, velocity);
+        std::cout << "***************************************************************************************\n";
 //        motor->calibrate();
-//        std::cout << "***************************************************************************************\n";
-//        motor->print();
-//        std::cout << "***************************************************************************************\n";
+        std::cout << "***************************************************************************************\n";
+        motor->print();
+        std::cout << "***************************************************************************************\n";
         std::cout << "Completed tests for device " << i + 1 << std::endl;
         delete (motor);
     }
